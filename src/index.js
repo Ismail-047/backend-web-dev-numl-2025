@@ -12,12 +12,14 @@ app.use(cookieParser());
 app.use(cors({ origin: [process.env.FRONTEND_URL], credentials: true }))
 
 app.get("/", (req, res) => {
-   res.send("<h1>Hello from Mikaz</h1>");
+   res.send("<h1>Hello from Web Dev Competition Numl 2025</h1>");
 })
 
 import UserRoutes from "./routes/user.routes.js";
+import AuthRoutes from "./routes/auth.routes.js";
 
 app.use("/api/v1/users", UserRoutes);
+app.use("/api/v1/auth", AuthRoutes);
 
 connectDatabase().then(() => {
    server.listen(3000, () => {

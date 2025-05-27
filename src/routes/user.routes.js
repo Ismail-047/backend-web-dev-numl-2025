@@ -6,7 +6,6 @@ import {
 
 const router = express.Router();
 
-
 router.post("/subscribe-to-newsletters", subscribeToNewsletters);
 router.delete("/unsubscribe-to-newsletters", unsubscribeToNewsletters);
 

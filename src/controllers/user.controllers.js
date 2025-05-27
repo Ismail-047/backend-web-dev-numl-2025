@@ -1,6 +1,8 @@
 import { Newsletter } from "../models/newsletters.model.js";
 import { sendRes, logError } from "../utils/comman.utils.js";
 
+
+// SUBSCRIBE TO NEWSLETTERS
 export const subscribeToNewsletters = async (req, res) => {
     try {
         const { email } = req.body;
@@ -18,6 +20,7 @@ export const subscribeToNewsletters = async (req, res) => {
     }
 }
 
+// UNSUBSCRIBE TO NEWSLETTERS
 export const unsubscribeToNewsletters = async (req, res) => {
     try {
         const { email } = req.body;

@@ -2,46 +2,42 @@ import mongoose from "mongoose";
 import bcryptjs from "bcryptjs";
 
 const userSchema = new mongoose.Schema({
-    userName: {
+    name: {
+        type: String,
+        required: true,
+    },
+    email: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    password: {
+        type: String,
+    },
+    phoneNumber: {
         type: String,
         default: ""
     },
-    userEmail: {
+    picture: {
         type: String,
-        required: true,
-        unique: true,
-        match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        default: ""
     },
-    userPassword: {
-        type: String,
-        required: true,
-        minlength: 8
-    },
-    userLastSeen: {
-        type: Date,
-        default: null
-    },
-    isUserVerified: {
+    isVerified: {
         type: Boolean,
-        required: true,
         default: false
     },
-    userProfilePic: {
-        type: String,
-        default: ""
-    },
+
     emailVerificationCode: String,
     verificationCodeExpiresAt: Date,
     resetPassToken: String,
     resetPassTokenExpiresAt: Date,
 
-},
-    { timestamps: true });
+}, { timestamps: true });
 
 userSchema.pre("save", async function (next) {
     try {
-        if (this.isModified("userPassword")) {
-            this.userPassword = await bcryptjs.hash(this.userPassword, 10);
+        if (this.isModified("password")) {
+            this.password = await bcryptjs.hash(this.password, 10);
         }
         if (this.isModified("emailVerificationCode")) {
             this.emailVerificationCode = await bcryptjs.hash(this.emailVerificationCode, 10);
@@ -53,7 +49,7 @@ userSchema.pre("save", async function (next) {
 });
 
 userSchema.methods.comparePassword = async function (enteredPassword) {
-    return bcryptjs.compare(enteredPassword, this.userPassword);
+    return bcryptjs.compare(enteredPassword, this.password);
 };
 
 userSchema.methods.compareVerificationCode = async function (emailVerificationCode) {
