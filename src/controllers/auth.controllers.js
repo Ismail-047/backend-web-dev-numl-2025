@@ -1,6 +1,7 @@
 import { User } from "../models/user.model.js";
-import { sendRes, logError } from "../utils/comman.utils.js";
+import { sendRes, logError, generateVerificationCode, getExpiryTime } from "../utils/comman.utils.js";
 import { generateTokenAndSetCookie } from "../utils/auth.utils.js";
+import { sendEmailVerificationCode } from "../lib/emails.js";
 
 // CHECK AUTHENTICATED USER
 export const checkAuth = async (req, res) => {
@@ -21,12 +22,62 @@ export const checkAuth = async (req, res) => {
 // SIGNUP USER
 export const signupUser = async (req, res) => {
     try {
-        const { name, email, password, phoneNumber, picture } = req.body;
+        const { name, email, password, phoneNumber } = req.body;
 
-        return sendRes(res, 200, "");
+        const existingUser = await User.findOne({ email });
+
+        if (existingUser) {
+            if (existingUser.isVerified)
+                return sendRes(res, 400, "An account with this email already exists.");
+            else
+                await User.findByIdAndDelete({ _id: existingUser._id });
+        }
+
+        const emailVerificationCode = generateVerificationCode();
+        await User.create({
+            name,
+            email,
+            password,
+            phoneNumber,
+            emailVerificationCode,
+            verificationCodeExpiresAt: getExpiryTime(10)
+        });
+
+        sendEmailVerificationCode(email, emailVerificationCode);
+        return sendRes(res, 200, "User created successfully. Please verify your email to login.");
     }
     catch (error) {
         logError("signupUser (auth.controllers.js)", error);
+        return sendRes(res, 500, "Something went wrong on our side. Please! try again.");
+    }
+}
+
+export const verifyUserEmail = async (req, res) => {
+    try {
+        const { email, emailVerificationCode } = req.body;
+
+        if (!email) return sendRes(res, 400, "Email is required.");
+
+        let existingUser = await User.findOne({ email });
+        if (!existingUser) return sendRes(res, 400, "No account found. Try signing up.");
+
+        const isMatched = await existingUser.compareVerificationCode(emailVerificationCode);
+        if (!isMatched) return sendRes(res, 400, "The verification code entered is incorrect. Please try again.");
+
+        if (existingUser.verificationCodeExpiresAt < Date.now())
+            return sendRes(res, 400, "Verification code expired. Try Signingup Again.");
+
+        existingUser = await User.findOneAndUpdate(
+            { email },
+            { isVerified: true },
+            { new: true, select: "-password -isVerified -emailVerificationCode -verificationCodeExpiresAt -resetPassToken -resetPassTokenExpiresAt" }
+        );
+
+        generateTokenAndSetCookie(res, existingUser._id);
+        return sendRes(res, 200, "Email verified successfully. Login Successfull.", existingUser);
+    }
+    catch (error) {
+        logError("verifyUserEmail (auth.controllers.js)", error);
         return sendRes(res, 500, "Something went wrong on our side. Please! try again.");
     }
 }
