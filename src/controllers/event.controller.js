@@ -151,3 +151,84 @@ export const searchEvents = async (req, res) => {
         return sendRes(res, 500, "Something went wrong on our side. Please try again later.");
     }
 };
+
+export const registerForEvent = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const { userId } = req.user;
+
+        const event = await Event.findById(eventId);
+        if (!event) return sendRes(res, 404, "Event not found.");
+
+        const user = await User.findById(userId);
+        if (!user) return sendRes(res, 404, "User not found.");
+
+        // Check if user is already registered
+        const isAlreadyRegistered = event.rsvps.some(rsvp => rsvp.userId.toString() === userId);
+        if (isAlreadyRegistered) {
+            return sendRes(res, 400, "You are already registered for this event.");
+        }
+
+        // Add new RSVP
+        event.rsvps.push({
+            userId: user._id,
+            name: user.name,
+            email: user.email,
+            registeredAt: new Date()
+        });
+
+        await event.save();
+        return sendRes(res, 200, "Event registered successfully.");
+    }
+    catch (error) {
+        logError("registerForEvent (event controllers)", error);
+        return sendRes(res, 500, "Something went wrong on our side. Please try again later.");
+    }
+}
+
+export const unregisterForEvent = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const { userId } = req.user;
+
+        const event = await Event.findById(eventId);
+        if (!event) return sendRes(res, 404, "Event not found.");
+
+        // Remove RSVP
+        event.rsvps = event.rsvps.filter(rsvp => rsvp.userId.toString() !== userId);
+        await event.save();
+        return sendRes(res, 200, "Event unregistered successfully.");
+
+    }
+    catch (error) {
+        logError("unregisterForEvent (event controllers)", error);
+        return sendRes(res, 500, "Something went wrong on our side. Please try again later.");
+    }
+}
+
+export const getRegisteredEvents = async (req, res) => {
+    try {
+        const { userId } = req.user;
+
+        const events = await Event.find({ "rsvps.userId": userId }).sort({ createdAt: -1 });
+
+        return sendRes(res, 200, "Registered events fetched successfully.", events);
+    }
+    catch (error) {
+        logError("getRegisteredEvents (event controllers)", error);
+        return sendRes(res, 500, "Something went wrong on our side. Please try again later.");
+    }
+}
+
+export const getEventDetails = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const event = await Event.findById(eventId);
+        return sendRes(res, 200, "Event details fetched successfully.", event);
+    }
+    catch (error) {
+        logError("getEventDetails (event controllers)", error);
+        return sendRes(res, 500, "Something went wrong on our side. Please try again later.");
+    }
+}
+
