@@ -22,7 +22,7 @@ export const checkAuth = async (req, res) => {
 // SIGNUP USER
 export const signupUser = async (req, res) => {
     try {
-        const { name, email, password, phoneNumber } = req.body;
+        const { name, email, password, phoneNumber, role } = req.body;
 
         const existingUser = await User.findOne({ email });
 
@@ -39,6 +39,7 @@ export const signupUser = async (req, res) => {
             email,
             password,
             phoneNumber,
+            role,
             emailVerificationCode,
             verificationCodeExpiresAt: getExpiryTime(10)
         });
@@ -109,7 +110,7 @@ export const loginUser = async (req, res) => {
 // CONTINUE WITH GOOGLE
 export const continueWithGoogle = async (req, res) => {
     try {
-        const { email, name, picture, phoneNumber } = req.body;
+        const { email, name, picture, phoneNumber, role } = req.body;
 
         const isUserAlreadyExists = await User.findOne({ email });
 
@@ -118,7 +119,7 @@ export const continueWithGoogle = async (req, res) => {
             return sendRes(res, 200, "Login Successfull.", isUserAlreadyExists);
         }
 
-        const newUser = await User.create({ email, name, picture, phoneNumber, isVerified: true });
+        const newUser = await User.create({ email, name, picture, phoneNumber, role, isVerified: true });
 
         generateTokenAndSetCookie(res, newUser._id);
 
