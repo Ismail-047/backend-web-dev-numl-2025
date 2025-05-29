@@ -17,9 +17,11 @@ app.get("/", (req, res) => {
 
 import UserRoutes from "./routes/user.routes.js";
 import AuthRoutes from "./routes/auth.routes.js";
+import EventRoutes from "./routes/event.routes.js";
 
 app.use("/api/v1/users", UserRoutes);
 app.use("/api/v1/auth", AuthRoutes);
+app.use("/api/v1/events", EventRoutes);
 
 connectDatabase().then(() => {
    server.listen(3000, () => {

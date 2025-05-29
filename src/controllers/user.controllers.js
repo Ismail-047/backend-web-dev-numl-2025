@@ -1,6 +1,25 @@
 import { Newsletter } from "../models/newsletters.model.js";
 import { sendRes, logError } from "../utils/comman.utils.js";
+import { User } from "../models/user.model.js";
 
+export const updateFcmToken = async (req, res) => {
+    try {
+        const { fcmToken } = req.body;
+        const { userId: loggedInUserId } = req.user;
+
+        if (!fcmToken) return sendRes(res, 400, "FCM Token Is Required.");
+
+        const user = await User.findByIdAndUpdate(loggedInUserId, { fcmToken }, { new: true });
+
+        if (!user) return sendRes(res, 400, "User Not Found.");
+
+        return sendRes(res, 200, "FCM Token Updated Successfully.", user);
+    }
+    catch (error) {
+        logError("updateFcmToken", error);
+        return sendRes(res, 500, "Something went wrong on our side. Please! try again.");
+    }
+}
 
 // SUBSCRIBE TO NEWSLETTERS
 export const subscribeToNewsletters = async (req, res) => {
